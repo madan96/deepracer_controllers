@@ -43,6 +43,10 @@
           "renderingEngine": {
             "name": "OGRE",
             "version": "1.x"
+          },
+          "robotSoftwareSuite": {
+            "name": "ROS",
+            "version": "Kinetic"
           }
         },
         "simulation": {
