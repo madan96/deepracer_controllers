@@ -124,6 +124,8 @@ aimlessly.
 You first need to install colcon. Python 3.5 or above is required.
 
 ```bash
+apt-get update
+apt-get install -y python3-pip python3-apt
 pip3 install colcon-ros-bundle
 ```
 
