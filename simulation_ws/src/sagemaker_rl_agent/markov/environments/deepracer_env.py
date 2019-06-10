@@ -70,7 +70,7 @@ class DeepRacerEnv(gym.Env):
 
         # given image from simulator
         self.observation_space = spaces.Box(low=0, high=255,
-                                            shape=(screen_height, screen_width, 3), dtype=np.uint8)
+                                            shape=(screen_height, screen_width), dtype=np.uint8) # shape=(screen_height, screen_width, 3)
 
         if node_type == SIMULATION_WORKER:
             # ROS initialization
@@ -203,8 +203,15 @@ class DeepRacerEnv(gym.Env):
         image = Image.frombytes('RGB', (self.image.width, self.image.height),
                                 self.image.data, 'raw', 'BGR', 0, 1)
         # resize image ans perform anti-aliasing
-        image = image.resize(TRAINING_IMAGE_SIZE, resample=2).convert("RGB")
-        state = np.array(image)
+        image = image.resize(TRAINING_IMAGE_SIZE, resample=2).convert("RGB") # Orignally RGB
+        image = np.array(image)
+
+        r, g, b = image[:, :, 0], image[:, :, 1], image[:, :, 2]
+        state = 0.2989 * r + 0.5870 * g + 0.1140 * b
+        state = state.astype(np.uint8)
+        # state = state.flatten()
+
+        # print (state[0])
 
         on_track = self.on_track
         total_progress = self.progress - self.progress_at_beginning_of_race
