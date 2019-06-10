@@ -70,7 +70,7 @@ class DeepRacerEnv(gym.Env):
 
         # given image from simulator
         self.observation_space = spaces.Box(low=0, high=255,
-                                            shape=(screen_height, screen_width), dtype=np.uint8) # shape=(screen_height, screen_width, 3)
+                                            shape=(screen_height, screen_width, 3), dtype=np.uint8) # shape=(screen_height, screen_width, 3)
 
         if node_type == SIMULATION_WORKER:
             # ROS initialization
@@ -209,6 +209,8 @@ class DeepRacerEnv(gym.Env):
         r, g, b = image[:, :, 0], image[:, :, 1], image[:, :, 2]
         state = 0.2989 * r + 0.5870 * g + 0.1140 * b
         state = state.astype(np.uint8)
+        state = np.expand_dims(state, axis=2)
+        state = state.repeat(3, axis=2)
         # state = state.flatten()
 
         # print (state[0])

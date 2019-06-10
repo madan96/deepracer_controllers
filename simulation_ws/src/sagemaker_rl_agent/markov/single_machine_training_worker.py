@@ -17,7 +17,7 @@ import gym
 import os
 
 sys.path.remove('/opt/ros/kinetic/lib/python2.7/dist-packages')
-from stable_baselines.common.policies import MlpPolicy
+from stable_baselines.common.policies import MlpPolicy, CnnPolicy
 from stable_baselines.common.vec_env.dummy_vec_env import DummyVecEnv
 from stable_baselines import PPO2
 
@@ -80,8 +80,7 @@ def main():
     # for i in range(50):
     #     action = np.random.random_integers(0, 4)
     #     next_state, reward, _, _ = env.step(action)
-
-    model = PPO2(MlpPolicy, env, learning_rate=0.0003, noptepochs=10, tensorboard_log='/home/rishabh/work/BRL_Car/deepracer/simulation_ws/tb_logs/')
+    model = PPO2(CnnPolicy, env, learning_rate=0.0003, noptepochs=10, n_steps=64, tensorboard_log='/home/rishabh/work/BRL_Car/deepracer/simulation_ws/tb_logs/')
     model.learn(total_timesteps=10000000) #, callback=callback)
     model.save('/home/rishabh/work/BRL_Car/deepracer/simulation_ws/final_medium_policy')
         
