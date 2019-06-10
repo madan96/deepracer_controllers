@@ -2,18 +2,26 @@
 This is single machine training worker. It starts a local training and stores the model in S3.
 """
 
+import sys
 import argparse
 import copy
+import numpy as np
+import tensorflow as tf
 
-from markov.s3_boto_data_store import S3BotoDataStore, S3BotoDataStoreParameters
-from rl_coach.base_parameters import TaskParameters, Frameworks
-from rl_coach.utils import short_dynamic_import
 import imp
 
 import markov
 from markov import utils
 import markov.environments
+import gym
 import os
+
+sys.path.remove('/opt/ros/kinetic/lib/python2.7/dist-packages')
+from stable_baselines.common.policies import MlpPolicy
+from stable_baselines.common.vec_env.dummy_vec_env import DummyVecEnv
+from stable_baselines import PPO2
+
+sys.path.append('/opt/ros/kinetic/lib/python2.7/dist-packages')
 
 MARKOV_DIRECTORY = os.path.dirname(markov.__file__)
 CUSTOM_FILES_PATH = "./custom_files"
@@ -54,18 +62,6 @@ def main():
                         help="(int) Number of workers for multi-process based agents, e.g. A3C",
                         default=1,
                         type=int)
-    parser.add_argument('--model-s3-bucket',
-                        help='(string) S3 bucket where trained models are stored. It contains model checkpoints.',
-                        type=str,
-                        default=os.environ.get("MODEL_S3_BUCKET"))
-    parser.add_argument('--model-s3-prefix',
-                        help='(string) S3 prefix where trained models are stored. It contains model checkpoints.',
-                        type=str,
-                        default=os.environ.get("MODEL_S3_PREFIX"))
-    parser.add_argument('--aws-region',
-                        help='(string) AWS region',
-                        type=str,
-                        default=os.environ.get("ROS_AWS_REGION", "us-west-2"))
     parser.add_argument('--checkpoint-save-secs',
                         help="(int) Time period in second between 2 checkpoints",
                         type=int,
@@ -77,34 +73,18 @@ def main():
 
     args = parser.parse_args()
 
-    if args.markov_preset_file:
-        markov_path = imp.find_module("markov")[1]
-        preset_location = os.path.join(markov_path, "presets", args.markov_preset_file)
-        path_and_module = preset_location + ":graph_manager"
-        graph_manager = short_dynamic_import(path_and_module, ignore_module_case=True)
-        print("Using custom preset file from Markov presets directory!")
-    else:
-        raise ValueError("Unable to determine preset file")
+    env = gym.make('RoboMaker-DeepRacer-v0')
+    env = DummyVecEnv([lambda: env])
+    # env.reset()
+    
+    # for i in range(50):
+    #     action = np.random.random_integers(0, 4)
+    #     next_state, reward, _, _ = env.step(action)
 
-    # TODO: support other frameworks
-    task_parameters = TaskParameters(framework_type=Frameworks.tensorflow,
-                                     checkpoint_save_secs=args.checkpoint_save_secs)
-    task_parameters.__dict__['checkpoint_save_dir'] = args.local_model_directory
-    task_parameters.__dict__ = add_items_to_dict(task_parameters.__dict__, args.__dict__)
-
-    data_store_params_instance = S3BotoDataStoreParameters(bucket_name=args.model_s3_bucket,
-                                                           s3_folder=args.model_s3_prefix,
-                                                           checkpoint_dir=args.local_model_directory,
-                                                           aws_region=args.aws_region)
-    data_store = S3BotoDataStore(data_store_params_instance)
-
-    if args.save_frozen_graph:
-        data_store.graph_manager = graph_manager
-
-    graph_manager.data_store_params = data_store_params_instance
-    graph_manager.data_store = data_store
-    graph_manager.should_stop = should_stop_training_based_on_evaluation
-    start_graph(graph_manager=graph_manager, task_parameters=task_parameters)
+    model = PPO2(MlpPolicy, env, learning_rate=0.0003, noptepochs=10, tensorboard_log='/home/rishabh/work/BRL_Car/deepracer/simulation_ws/tb_logs/')
+    model.learn(total_timesteps=10000000) #, callback=callback)
+    model.save('/home/rishabh/work/BRL_Car/deepracer/simulation_ws/final_medium_policy')
+        
 
 
 if __name__ == '__main__':
