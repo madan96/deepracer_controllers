@@ -20,6 +20,7 @@ node_type = os.environ.get("NODE_TYPE", SIMULATION_WORKER)
 
 if node_type == SIMULATION_WORKER:
     import rospy
+    from std_srvs.srv import Empty
     from ackermann_msgs.msg import AckermannDriveStamped
     from gazebo_msgs.msg import ModelState
     from gazebo_msgs.srv import SetModelState
@@ -64,6 +65,8 @@ class DeepRacerEnv(gym.Env):
         self.distance_from_border_2 = 0
         self.steps = 0
         self.progress_at_beginning_of_race = 0
+        self.unpause = rospy.ServiceProxy('/gazebo/unpause_physics', Empty)
+        self.pause = rospy.ServiceProxy('/gazebo/pause_physics', Empty)
 
         # actions -> steering angle, throttle
         self.action_space = spaces.Box(low=np.array([-1, 0]), high=np.array([+1, +1]), dtype=np.float32)
@@ -94,6 +97,20 @@ class DeepRacerEnv(gym.Env):
             return self.observation_space.sample()
         print('Total Reward Reward=%.2f' % self.reward_in_episode,
               'Total Steps=%.2f' % self.steps)
+
+        rospy.wait_for_service('/gazebo/pause_physics')
+        try:
+            #resp_pause = pause.call()
+            self.pause()
+        except (rospy.ServiceException) as e:
+            print ("/gazebo/unpause_physics service call failed")
+
+        rospy.wait_for_service('/gazebo/unpause_physics')
+        try:
+            #resp_pause = pause.call()
+            self.unpause()
+        except (rospy.ServiceException) as e:
+            print ("/gazebo/pause_physics service call failed")
 
         self.reward_in_episode = 0
         self.reward = None
@@ -147,6 +164,13 @@ class DeepRacerEnv(gym.Env):
         if node_type == SAGEMAKER_TRAINING_WORKER:
             return self.observation_space.sample(), 0, False, {}
 
+        rospy.wait_for_service('/gazebo/unpause_physics')
+        try:
+            #resp_pause = pause.call()
+            self.unpause()
+        except (rospy.ServiceException) as e:
+            print ("/gazebo/pause_physics service call failed")
+
         # initialize rewards, next_state, done
         self.reward = None
         self.done = False
@@ -158,6 +182,13 @@ class DeepRacerEnv(gym.Env):
         self.send_action(steering_angle, throttle)
         time.sleep(SLEEP_BETWEEN_ACTION_AND_REWARD_CALCULATION_TIME_IN_SECOND)
         self.infer_reward_state(steering_angle, throttle)
+
+        rospy.wait_for_service('/gazebo/pause_physics')
+        try:
+            #resp_pause = pause.call()
+            self.pause()
+        except (rospy.ServiceException) as e:
+            print ("/gazebo/unpause_physics service call failed")
 
         info = {}  # additional data, not to be used for training
         return self.next_state, self.reward, self.done, info
