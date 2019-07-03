@@ -32,7 +32,8 @@ setup(
     entry_points = {
         'console_scripts': [
             'run_rollout_rl_agent=markov.rollout_worker:main',
-            'run_local_rl_agent=envs.local_worker:main'
+            'run_local_rl_agent=envs.local_worker:main',
+            'run_pid_agent=envs.run_pid:main'
         ],
     }
 )
