@@ -64,7 +64,7 @@ class PurePursuitController():
     """
     PurePursuitController implements lateral control using Pure Pursuit.
     """
-    def __init__(self, vehicle, K_P=1.0, K_D=0.0, K_I=0.0, dt=0.03):
+    def __init__(self, vehicle, K_P=1.0, K_D=0.0, K_I=0.0, dt=0.03, lfc=0.2):
         """
         :param vehicle: actor to apply to local planner logic onto
         :param K_P: Proportional term
@@ -75,7 +75,7 @@ class PurePursuitController():
         self._vehicle = vehicle
         self._K_P = K_P # speed proportional gain
         self._K = 0.1  # look forward gain
-        self._lfc = 0.1  # look-ahead distance
+        self._lfc = 0.3  # look-ahead distance
         self._dt = dt
         self._e_buffer = deque(maxlen=10)
         self.waypoints = None
@@ -137,21 +137,18 @@ class PurePursuitController():
         :return: steering control in the range [-1, 1]
         """
 
-        # ind = self.calc_target_index()
+        ind = self.calc_target_index()
 
-        # if waypoint_idx >= ind:
-        #     ind = waypoint_idx
+        if waypoint_idx >= ind:
+            ind = waypoint_idx
 
-        # if ind < len(self._vehicle.waypoints):
-        #     tx = self._vehicle.waypoints[ind][0]
-        #     ty = self._vehicle.waypoints[ind][1]
-        # else:
-        #     tx = self._vehicle.waypoints[-1][0]
-        #     ty = self._vehicle.waypoints[-1][1]
-        #     ind = len(self._vehicle.waypoints) - 1
-        
-        tx = self._vehicle.waypoints[waypoint_idx][0]
-        ty = self._vehicle.waypoints[waypoint_idx][1]
+        if ind < len(self._vehicle.waypoints) - 2: # Hack: Subtracting a small number to continue laps
+            tx = self._vehicle.waypoints[ind][0]
+            ty = self._vehicle.waypoints[ind][1]
+        else:
+            tx = self._vehicle.waypoints[0][0]
+            ty = self._vehicle.waypoints[0][1]
+            ind = 0
 
         alpha = math.atan2(ty - self._vehicle.rear_y, tx - self._vehicle.rear_x) - self._vehicle.yaw
 

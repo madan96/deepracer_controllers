@@ -16,6 +16,8 @@ def main():
     env = gym.make('RoboMaker-DeepRacerPID-v0')
     env = env.unwrapped
     # time.sleep(5)
+    
+    # TODO: Add arg parser for controller parameters
     car_pid = VehiclePIDController(env)
     car_pid._lat_controller.waypoints = env.waypoints
     tgt_waypoint_idx = 1

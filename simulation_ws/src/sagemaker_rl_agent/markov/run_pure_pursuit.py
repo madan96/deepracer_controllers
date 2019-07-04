@@ -16,6 +16,8 @@ def main():
     env = gym.make('RoboMaker-DeepRacerPID-v0')
     env = env.unwrapped
     # time.sleep(5)
+
+    # TODO: Add arg parser for controller parameters
     car_pid = VehiclePPController(env)
     car_pid._lat_controller.waypoints = env.waypoints
     tgt_waypoint_idx = 1
@@ -25,9 +27,9 @@ def main():
     env.reset()
 
     while steps < max_steps:
-        tgt_waypoint_idx = env.get_closest_waypoint() % len(env.waypoints)
-        if tgt_waypoint_idx == 0:
-            tgt_waypoint_idx += 1
+        # tgt_waypoint_idx = env.get_closest_waypoint() % len(env.waypoints)
+        # if tgt_waypoint_idx == 0:
+        #     tgt_waypoint_idx += 1
         steering_angle, tgt_waypoint_idx, throttle = car_pid.run_step(target_speed, tgt_waypoint_idx)
         env.send_action(steering_angle, 1)
         max_steps += 1
