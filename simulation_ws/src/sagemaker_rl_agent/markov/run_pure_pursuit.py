@@ -27,11 +27,20 @@ def main():
     env.reset()
 
     while steps < max_steps:
-        # tgt_waypoint_idx = env.get_closest_waypoint() % len(env.waypoints)
-        # if tgt_waypoint_idx == 0:
-        #     tgt_waypoint_idx += 1
-        steering_angle, tgt_waypoint_idx, throttle = car_pid.run_step(target_speed, tgt_waypoint_idx)
-        env.send_action(steering_angle, 1)
+        steering_angle, tgt_waypoint_idx = car_pid._lat_controller.run_step(tgt_waypoint_idx)
+        if math.fabs(steering_angle) > 0.4:
+            target_speed = 1.0
+        if math.fabs(steering_angle) > 0.3:
+            target_speed = 1.5
+        elif math.fabs(steering_angle) > 0.2:
+            target_speed = 3.0
+        elif math.fabs(steering_angle) > 0.1:
+            target_speed = 4.0
+        else:
+            target_speed = 3.5
+        speed = car_pid._lon_controller.run_step(target_speed)
+        print ("S: ", steering_angle, "T: ", speed)
+        env.send_action(steering_angle, speed)
         max_steps += 1
 
 if __name__ == '__main__':

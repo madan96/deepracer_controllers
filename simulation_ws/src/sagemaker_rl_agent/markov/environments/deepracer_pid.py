@@ -68,7 +68,7 @@ class DeepRacerEnv(gym.Env):
         self.wheelbase = 0.195
         self.rear_x = self.x - ((self.wheelbase / 2) * math.cos(self.yaw))
         self.rear_y = self.y - ((self.wheelbase / 2) * math.sin(self.yaw))
-        self.v = 0
+        # self.v = 0
         self.distance_from_center = 0
         self.distance_from_border_1 = 0
         self.distance_from_border_2 = 0
@@ -95,7 +95,7 @@ class DeepRacerEnv(gym.Env):
             # Subscribe to ROS topics and register callbacks
             rospy.Subscriber('/progress', Progress, self.callback_progress)
             rospy.Subscriber('/camera/zed/rgb/image_rect_color', sensor_image, self.callback_image)
-            rospy.Subscriber('/gazebo/model_states/twist', Twist, self.get_current_speed)
+            rospy.Subscriber('/vesc/low_level/ackermann_cmd_mux/output', AckermannDriveStamped, self.get_current_speed)
             self.world_name = rospy.get_param('WORLD_NAME')
             self.set_waypoints()
 
@@ -211,7 +211,7 @@ class DeepRacerEnv(gym.Env):
         self.image = data
 
     def get_current_speed(self, data):
-        self.current_speed = math.sqrt(data.linear.x**2 + data.linear.y**2)
+        self.current_speed = data.drive.speed #math.sqrt(data.twist.linear.x**2 + data.twist.linear.y**2)
 
     def callback_progress(self, data):
         self.on_track = not (data.off_track)

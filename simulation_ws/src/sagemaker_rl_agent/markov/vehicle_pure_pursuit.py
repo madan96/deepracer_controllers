@@ -37,7 +37,7 @@ class VehiclePPController():
         if not args_lateral:
             args_lateral = {'K_P': 1.0, 'K_D': 0.001, 'K_I': 0.001}
         if not args_longitudinal:
-            args_longitudinal = {'K_P': 1.0, 'K_D': 0.00, 'K_I': 0.00}
+            args_longitudinal = {'K_P': 1.0, 'K_D': 0.1, 'K_I': 0.1}
 
         self._vehicle = vehicle
         self._lon_controller = PIDLongitudinalController(self._vehicle, **args_longitudinal)
@@ -75,7 +75,7 @@ class PurePursuitController():
         self._vehicle = vehicle
         self._K_P = K_P # speed proportional gain
         self._K = 0.1  # look forward gain
-        self._lfc = 0.3  # look-ahead distance
+        self._lfc = 0.1  # look-ahead distance
         self._dt = dt
         self._e_buffer = deque(maxlen=10)
         self.waypoints = None
@@ -152,7 +152,7 @@ class PurePursuitController():
 
         alpha = math.atan2(ty - self._vehicle.rear_y, tx - self._vehicle.rear_x) - self._vehicle.yaw
 
-        Lf = self._K * self._vehicle.v + self._lfc
+        Lf = self._K * self._vehicle.current_speed + self._lfc
 
         delta = math.atan2(2.0 * self._vehicle.wheelbase * math.sin(alpha) / Lf, 1.0)
         steering_angle = (delta * 180 / math.pi)

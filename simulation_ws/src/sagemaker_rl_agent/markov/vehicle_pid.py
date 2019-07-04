@@ -62,7 +62,7 @@ class PIDLongitudinalController():
     PIDLongitudinalController implements longitudinal control using a PID.
     """
 
-    def __init__(self, vehicle, K_P=1.0, K_D=0.0, K_I=0.0, dt=0.03):
+    def __init__(self, vehicle, K_P=1.0, K_D=0.1, K_I=0.1, dt=0.03):
         """
         :param vehicle: actor to apply to local planner logic onto
         :param K_P: Proportional term
@@ -98,7 +98,7 @@ class PIDLongitudinalController():
         :param current_speed: current speed of the vehicle in Km/h
         :return: throttle control in the range [0, 1]
         """
-        _e = (target_speed - current_speed)
+        _e = (target_speed - self._vehicle.current_speed)
         self._e_buffer.append(_e)
 
         if len(self._e_buffer) >= 2:
@@ -108,7 +108,10 @@ class PIDLongitudinalController():
             _de = 0.0
             _ie = 0.0
 
-        return np.clip((self._K_P * _e) + (self._K_D * _de / self._dt) + (self._K_I * _ie * self._dt), 0.0, 1.0)
+        throttle = np.clip((self._K_P * _e) + (self._K_D * _de / self._dt) + (self._K_I * _ie * self._dt), -1.0, 1.0)
+        print ("Thr: ", throttle, "Curr: ", self._vehicle.current_speed)
+        new_speed = self._vehicle.current_speed + throttle * self._dt
+        return new_speed
 
 
 class PIDLateralController():
