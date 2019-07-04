@@ -10,13 +10,13 @@ import markov.environments
 import gym
 import os
 
-from markov.vehicle_pid import VehiclePIDController
+from markov.vehicle_pure_pursuit import VehiclePPController
 
 def main():
     env = gym.make('RoboMaker-DeepRacerPID-v0')
     env = env.unwrapped
     # time.sleep(5)
-    car_pid = VehiclePIDController(env)
+    car_pid = VehiclePPController(env)
     car_pid._lat_controller.waypoints = env.waypoints
     tgt_waypoint_idx = 1
     max_steps = 10000
@@ -28,7 +28,7 @@ def main():
         tgt_waypoint_idx = env.get_closest_waypoint() % len(env.waypoints)
         if tgt_waypoint_idx == 0:
             tgt_waypoint_idx += 1
-        steering_angle, throttle = car_pid.run_step(target_speed, tgt_waypoint_idx)
+        steering_angle, tgt_waypoint_idx, throttle = car_pid.run_step(target_speed, tgt_waypoint_idx)
         env.send_action(steering_angle, 1)
         max_steps += 1
 

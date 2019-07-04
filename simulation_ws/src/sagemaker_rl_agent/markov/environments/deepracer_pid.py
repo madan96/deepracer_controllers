@@ -64,6 +64,11 @@ class DeepRacerEnv(gym.Env):
         self.x = 0
         self.y = 0
         self.z = 0
+        # For Pure Pursuit
+        self.wheelbase = 0.195
+        self.rear_x = self.x - ((self.wheelbase / 2) * math.cos(self.yaw))
+        self.rear_y = self.y - ((self.wheelbase / 2) * math.sin(self.yaw))
+        self.v = 0
         self.distance_from_center = 0
         self.distance_from_border_1 = 0
         self.distance_from_border_2 = 0
@@ -72,7 +77,6 @@ class DeepRacerEnv(gym.Env):
         self.progress_at_beginning_of_race = 0
         self.unpause = rospy.ServiceProxy('/gazebo/unpause_physics', Empty)
         self.pause = rospy.ServiceProxy('/gazebo/pause_physics', Empty)
-        self.wp_idx = 0
 
         # actions -> steering angle, throttle
         self.action_space = spaces.Box(low=np.array([-1, 0]), high=np.array([+1, +1]), dtype=np.float32)
@@ -219,6 +223,9 @@ class DeepRacerEnv(gym.Env):
         self.distance_from_center = data.distance_from_center
         self.distance_from_border_1 = data.distance_from_border_1
         self.distance_from_border_2 = data.distance_from_border_2
+        # For Pure Pursuit
+        self.rear_x = self.x - ((self.wheelbase / 2) * math.cos(self.yaw))
+        self.rear_y = self.y - ((self.wheelbase / 2) * math.sin(self.yaw))
 
     def send_action(self, steering_angle, throttle):
         ack_msg = AckermannDriveStamped()
@@ -350,7 +357,6 @@ class DeepRacerEnv(gym.Env):
         dl = 0.05
         cx, cy, cyaw, ck, s = cubic_spline_planner.calc_spline_course(
             ax, ay, ds=dl)
-        print (len(cx))
         self.waypoints = np.zeros((len(cx), 3))
         self.waypoints[:,0] = cx
         self.waypoints[:,1] = cy
